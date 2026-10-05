@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hoodchan — AI Agent</title>
+  <meta name="description" content="Hoodchan is an AI agent. Ask anything. Ticker HOODCHAN. CA 0xcomingsoon.">
+  <meta name="theme-color" content="#070a08">
+  <link rel="icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="is-booting">
+  <div id="intro" role="dialog" aria-label="Hoodchan intro">
+    <video id="bootVideo" src="1414.mp4" playsinline preload="auto"></video>
+    <div class="intro-shade"></div>
+    <div class="intro-top">
+      <img src="logo.png" alt="" width="42" height="42">
+      <div>
+        <strong>HOODCHAN</strong>
+        <span>AI AGENT // BOOT</span>
+      </div>
+    </div>
+    <button id="enterGate" class="enter-gate" type="button" hidden>
+      <img src="logo.png" alt="">
+      <span>Enter</span>
+    </button>
+    <div class="intro-bottom">
+      <button id="soundBtn" class="ghost" type="button">Sound off</button>
+      <button id="skipBtn" class="ghost" type="button">Skip</button>
+    </div>
+    <div class="intro-progress" aria-hidden="true"><span id="introBar"></span></div>
+  </div>
+
+  <div id="site" class="site" inert>
+    <header class="nav" id="nav">
+      <a class="brand" href="#top">
+        <img src="logo.png" alt="Hoodchan">
+        <span>HOODCHAN</span>
+      </a>
+      <nav>
+        <a href="#agent">Agent</a>
+        <a href="#token">Token</a>
+        <a href="#archive">Memes</a>
+      </nav>
+      <button class="ca-pill" type="button" data-copy="0xcomingsoon">
+        <span class="ca-k">CA</span>
+        <span class="ca-v">0xcomingsoon</span>
+        <span class="ca-go">Copy</span>
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <img class="banner" src="banner.png" alt="Hoodchan above the mountains, the name written in leaves and light">
+        <div class="hero-copy">
+          <p class="eyebrow">AI agent · online</p>
+          <h1>Ask Hoodchan anything.</h1>
+          <p class="lede">Name Hoodchan. Ticker HOODCHAN. She answers the question you actually asked.</p>
+          <div class="hero-actions">
+            <a class="btn solid" href="#agent">Talk to her</a>
+            <button class="btn line" type="button" data-copy="0xcomingsoon">Copy CA</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="agent" id="agent">
+        <div class="section-label">
+          <span>01</span>
+          <h2>The agent</h2>
+        </div>
+        <div class="agent-layout">
+          <aside class="dossier">
+            <div class="portrait">
+              <img src="logo.png" alt="Hoodchan">
+              <span class="live-dot" id="liveDot"></span>
+            </div>
+            <p class="dossier-kicker">Agent 01</p>
+            <h3>Hoodchan</h3>
+            <p class="dossier-bio">Long black hair, green eyes, a leaf for a mark. She sits between the neon city and the green ridge, and she does not dodge the question.</p>
+            <dl>
+              <div><dt>Name</dt><dd>Hoodchan</dd></div>
+              <div><dt>Ticker</dt><dd>HOODCHAN</dd></div>
+              <div><dt>Status</dt><dd id="linkState">Ready</dd></div>
+              <div>
+                <dt>CA</dt>
+                <dd><button type="button" class="inline-ca" data-copy="0xcomingsoon">0xcomingsoon</button></dd>
+              </div>
+            </dl>
+          </aside>
+
+          <div class="console" id="console">
+            <div class="tick tl"></div>
+            <div class="tick tr"></div>
+            <div class="tick bl"></div>
+            <div class="tick br"></div>
+            <div class="console-bar">
+              <span>HOODCHAN</span>
+              <span class="console-mid">ASK ANYTHING</span>
+              <span id="consoleClock">--:--</span>
+            </div>
+            <div class="thread" id="thread" aria-live="polite"></div>
+            <div class="chips" id="chips">
+              <button type="button" data-ask="Who are you?">Who are you?</button>
+              <button type="button" data-ask="What is the contract address?">What's the CA?</button>
+              <button type="button" data-ask="What can you do?">What can you do?</button>
+              <button type="button" data-ask="Tell me something true.">Tell me something true</button>
+            </div>
+            <form class="composer" id="composer">
+              <label class="sr" for="askBox">Message Hoodchan</label>
+              <textarea id="askBox" rows="1" maxlength="4000" placeholder="Ask anything…"></textarea>
+              <button type="submit" id="sendBtn">Send</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="token" id="token">
+        <div class="section-label">
+          <span>02</span>
+          <h2>The coin</h2>
+        </div>
+        <div class="token-grid">
+          <article>
+            <p>Name</p>
+            <strong>Hoodchan</strong>
+          </article>
+          <article>
+            <p>Ticker</p>
+            <strong>HOODCHAN</strong>
+          </article>
+          <article>
+            <p>Contract</p>
+            <strong>0xcomingsoon</strong>
+            <button type="button" data-copy="0xcomingsoon">Copy</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="signals" id="signals">
+        <div class="section-label">
+          <span>03</span>
+          <h2>Signals</h2>
+        </div>
+        <div class="signal-row">
+          <figure>
+            <video src="Video/1.mp4" muted loop playsinline autoplay></video>
+            <figcaption>Signal 01</figcaption>
+          </figure>
+          <figure>
+            <video src="Video/2.mp4" muted loop playsinline autoplay></video>
+            <figcaption>Signal 02</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="archive" id="archive">
+        <div class="section-label">
+          <span>04</span>
+          <h2>Meme folder</h2>
+        </div>
+        <div class="archive-grid" id="archiveGrid"></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <img src="logo.png" alt="">
+      <div>
+        <strong>Hoodchan</strong>
+        <span>AI agent · HOODCHAN · 0xcomingsoon</span>
+      </div>
+    </footer>
+  </div>
+
+  <dialog id="light">
+    <button type="button" id="lightPrev" aria-label="Previous">‹</button>
+    <img id="lightImg" alt="">
+    <button type="button" id="lightNext" aria-label="Next">›</button>
+    <button type="button" id="lightClose" aria-label="Close">Close</button>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+  <script src="main.js?v=3" defer></script>
+</body>
+</html>
