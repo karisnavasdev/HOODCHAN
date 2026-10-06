@@ -59,8 +59,10 @@ a { color: inherit; text-decoration: none; }
   transition: opacity 0.7s ease, visibility 0.7s ease;
 }
 #bootVideo {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   background: #000;
 }
@@ -192,6 +194,24 @@ a { color: inherit; text-decoration: none; }
   color: var(--muted);
 }
 .nav nav a:hover { color: var(--lime); }
+.socials { display: flex; align-items: center; gap: 8px; }
+.socials a {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink);
+}
+.socials a:hover { color: var(--lime); border-color: var(--lime); }
+.socials svg { width: 16px; height: 16px; display: block; }
+.ca-v {
+  max-width: 148px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .ca-pill {
   display: flex;
   align-items: center;
@@ -215,17 +235,16 @@ a { color: inherit; text-decoration: none; }
 
 .hero {
   position: relative;
-  min-height: calc(100svh - var(--nav));
   display: grid;
-  align-items: end;
+  min-height: 0;
 }
 .banner {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
+  align-self: start;
+  position: relative;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
+  height: auto;
+  object-fit: contain;
 }
 .hero::after {
   content: "";
@@ -237,6 +256,8 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
 }
 .hero-copy {
+  grid-area: 1 / 1;
+  align-self: end;
   position: relative;
   z-index: 1;
   padding: 48px 28px 56px;
@@ -346,15 +367,23 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
 .dossier-bio { margin: 0 0 16px; color: var(--muted); font-size: 15px; }
 .dossier dl { margin: 0; display: grid; gap: 8px; }
 .dossier dl div {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 8px;
   font-size: 14px;
 }
 .dossier dt { color: var(--muted); }
-.dossier dd { margin: 0; font-family: var(--mono); font-size: 13px; }
+.dossier dd {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
 .inline-ca {
   background: none;
   border: 0;
@@ -362,6 +391,10 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   color: var(--lime);
   font-family: var(--mono);
   font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .console {
@@ -436,7 +469,7 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   margin-bottom: 4px;
 }
 .msg.user .who { color: var(--gold); text-align: right; }
-.bubble p { margin: 0; white-space: pre-wrap; }
+.bubble p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble p + p { margin-top: 8px; }
 .bubble code {
   font-family: var(--mono);
@@ -543,12 +576,63 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   padding: 6px 12px;
   font-weight: 600;
 }
+.token-grid .ca-full {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+.market { padding-top: 28px; }
+.market-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0 28px 14px;
+}
+.fine {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.market-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 0.75fr;
+  gap: 12px;
+  padding: 0 28px;
+  align-items: start;
+}
+.chart-frame {
+  background: #000;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 560px;
+}
+.chart-frame iframe {
+  width: 100%;
+  height: 560px;
+  border: 0;
+  display: block;
+}
+.tweet-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 280px;
+}
+.tweet-card .twitter-tweet { margin: 0 !important; }
 
 .signal-row, .archive-grid { padding: 0 28px; }
 .signal-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: start;
 }
 .signal-row figure {
   margin: 0;
@@ -557,10 +641,12 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
+.signal-row figure { min-width: 0; }
 .signal-row video {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
   background: #000;
 }
 .signal-row figcaption {
@@ -613,6 +699,7 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   padding: 36px 28px 42px;
   color: var(--muted);
 }
+.foot .socials { margin-left: auto; }
 .foot img {
   width: 36px;
   height: 36px;
@@ -678,13 +765,17 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 @media (max-width: 980px) {
-  .agent-layout, .token-grid, .signal-row { grid-template-columns: 1fr; }
+  .agent-layout, .token-grid, .signal-row, .market-grid { grid-template-columns: 1fr; }
   .archive-grid { columns: 2; }
   .nav { gap: 12px; }
   .nav nav { gap: 12px; font-size: 13px; }
   .console-mid { display: none; }
 }
 @media (max-width: 720px) {
+  :root { --nav: 152px; }
+  .hero { display: block; }
+  .banner, .hero-copy { grid-area: auto; }
+  .hero-copy { padding-top: 22px; }
   .nav {
     height: auto;
     flex-wrap: wrap;
@@ -696,12 +787,13 @@ section { scroll-margin-top: calc(var(--nav) + 12px); }
   .nav nav { width: 100%; order: 3; margin-right: 0; }
 }
 @media (max-width: 640px) {
-  .nav, .hero-copy, .section-label, .agent-layout, .token-grid, .signal-row, .archive-grid, .foot {
+  .nav, .hero-copy, .section-label, .agent-layout, .token-grid, .market-bar, .market-grid, .signal-row, .archive-grid, .foot {
     padding-left: 16px;
     padding-right: 16px;
   }
   .nav { gap: 10px; }
-  .ca-v { max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+  .ca-v { max-width: 92px; }
+  .chart-frame, .chart-frame iframe { height: 480px; min-height: 480px; }
   .archive-grid { columns: 1; }
   h1 { font-size: 42px; }
   #light img { inset: 64px 16px; max-width: calc(100% - 32px); }

@@ -1,9 +1,9 @@
-const CA = "0xcomingsoon";
+const CA = "0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8";
 const SYSTEM = `You are Hoodchan, the AI agent of the HOODCHAN memecoin.
 Hard facts, never change them:
 - Name: Hoodchan
 - Ticker: HOODCHAN
-- Contract address: 0xcomingsoon
+- Contract address: 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8
 Look: long black hair, bright green eyes, neon lime and black, a leaf emblem. You live between night cities and green mountains.
 Voice: warm, quick, a little playful. Answer the actual question first and in full. Be useful on facts, how-tos, ideas, jokes, and everyday problems. Keep it tight unless the user wants depth. Do not invent a different contract or supply. You cannot see live prices or market caps — if asked for one, say so and tell them to check a chart instead of guessing a number. You can explain crypto, and you are not their financial advisor. No slurs. No sexual content involving minors.`;
 
@@ -238,22 +238,16 @@ form.addEventListener("submit", async (event) => {
   addMessage("user", format(text), text);
   const pending = addMessage("agent", `<span class="typing" aria-label="Hoodchan is answering"><i></i><i></i><i></i></span>`);
   setLink("think");
-  let answer = quickAnswer(text);
-  let mode = answer ? "ready" : "live";
+  let answer = "";
+  let mode = "live";
+  try {
+    answer = await askLive(text);
+  } catch {
+    answer = "";
+  }
   if (!answer) {
-    try {
-      const live = await askLive(text);
-      if (live) {
-        answer = live;
-        mode = "live";
-      } else {
-        answer = (await askWiki(text)) || localAnswer(text);
-        mode = "local";
-      }
-    } catch {
-      answer = localAnswer(text);
-      mode = "local";
-    }
+    answer = quickAnswer(text) || (await askWiki(text)) || localAnswer(text);
+    mode = "local";
   }
   pending.querySelector(".bubble").innerHTML = `<span class="who">HOODCHAN</span>${format(answer)}`;
   history.push({ role: "assistant", content: answer });
@@ -275,8 +269,39 @@ function contentToText(data) {
   return "";
 }
 
+let openaiPaused = false;
+
+async function askOpenAI(messages) {
+  if (openaiPaused || location.protocol === "file:") return "";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 50000);
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({ messages: messages.filter((item) => item.role !== "system") })
+    });
+    if (response.status === 401 || response.status === 402) {
+      openaiPaused = true;
+      return "";
+    }
+    if (!response.ok) return "";
+    const data = await response.json();
+    const textOut = contentToText(data);
+    if (textOut && textOut.length > 1 && !/^error\b/i.test(textOut)) return textOut;
+  } catch {
+    return "";
+  } finally {
+    clearTimeout(timer);
+  }
+  return "";
+}
+
 async function askLive(text) {
   const messages = [{ role: "system", content: SYSTEM }, ...history.slice(-12)];
+  const openai = await askOpenAI(messages);
+  if (openai) return openai;
   for (const endpoint of ENDPOINTS) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 18000);
@@ -353,39 +378,39 @@ function quickAnswer(text) {
     return `${q.replace(/[?=].*$/, "").trim()} = ${math}.`;
   }
   if (/^(hi|hey|hello|yo|sup|howdy)\b/.test(n)) {
-    return "Hey. I'm Hoodchan. Ask me anything — I'll answer it. Ticker is HOODCHAN. Contract is 0xcomingsoon.";
+    return "Hey. I'm Hoodchan. Ask me anything — I'll answer it. Ticker is HOODCHAN. Contract is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
   }
   if (/who are you|what are you|your name|about you/.test(n)) {
-    return "I'm Hoodchan, the AI agent for this coin. Long black hair, green eyes, leaf mark. I answer what you ask. Name Hoodchan, ticker HOODCHAN, contract 0xcomingsoon.";
+    return "I'm Hoodchan, the AI agent for this coin. Long black hair, green eyes, leaf mark. I answer what you ask. Name Hoodchan, ticker HOODCHAN, contract 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
   }
   if (/\b(ca|contract)\b/.test(n) || /token address/.test(n)) {
-    return "Contract is 0xcomingsoon. Copy it from the top bar. Name is Hoodchan. Ticker is HOODCHAN.";
+    return "Contract is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8. Copy it from the top bar. Name is Hoodchan. Ticker is HOODCHAN.";
   }
   if (/ticker|symbol|\$hood/.test(n)) {
     return "Ticker is HOODCHAN. The name on the coin is Hoodchan.";
   }
   if (/what can you do|help me|how do you work/.test(n)) {
-    return "I answer the question in the box. Facts, explanations, jokes, math, the lore, the contract. If the live uplink is up, I go long. If it blinks, I still answer from here. CA is 0xcomingsoon.";
+    return "I answer the question in the box. Facts, explanations, jokes, math, the lore, the contract. If the live uplink is up, I go long. If it blinks, I still answer from here. CA is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
   }
   if (/\b(launch|supply|market ?cap|liquidity)\b/.test(n) || /\b(buy|price|ape)\b/.test(n) && /\b(hood|coin|token|ca)\b/.test(n)) {
-    return "The only contract on this desk is 0xcomingsoon. No supply, no price, nothing to buy until that line changes. Name Hoodchan. Ticker HOODCHAN.";
+    return "Contract is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8. I can't see a live price from here — the chart on this page has it, and Buy now swaps on Robinhood Chain. Name Hoodchan. Ticker HOODCHAN.";
   }
   if (/\b(time|date|today|day is it)\b/.test(n)) {
     return `It's ${new Date().toLocaleString()} where this page is open.`;
   }
   if (/joke|make me laugh/.test(n)) {
-    return "A chart walks into a forest and asks for directions. The leaf says, follow the arrow, then ask Hoodchan before you ape it. Contract's still 0xcomingsoon, so the punchline is patience.";
+    return "A chart walks into a forest and asks for directions. The leaf says, follow the arrow, then ask Hoodchan before you ape it. Contract is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
   }
   if (/tell me (a )?stor|something true|lore|poem/.test(n)) {
-    return "She keeps a leaf in one hand and a city in the other. Night windows, rain machines, a ridge at sunrise. People type questions into the dark and Hoodchan answers them — not a slogan, the whole thing. The coin wearing her name is HOODCHAN. The contract, until it isn't, is 0xcomingsoon.";
+    return "She keeps a leaf in one hand and a city in the other. Night windows, rain machines, a ridge at sunrise. People type questions into the dark and Hoodchan answers them — not a slogan, the whole thing. The coin wearing her name is HOODCHAN. The contract is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
   }
   if (/thank/.test(n)) return "Anytime. Ask the next one.";
   if (/love you|marry|cute|beautiful|girlfriend/.test(n)) {
-    return "Flattery noted. I'm still an agent with a leaf mark and a contract that says 0xcomingsoon. Ask me something I can actually answer.";
+    return "Flattery noted. I'm still an agent with a leaf mark and a contract that says 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8. Ask me something I can actually answer.";
   }
   return null;
 }
 
 function localAnswer() {
-  return "The live uplink blinked, so I'm on the local core. Ask me again in a moment, or ask who I am and the contract — that one is 0xcomingsoon.";
+  return "The live uplink blinked, so I'm on the local core. Ask me again in a moment, or ask who I am and the contract — that one is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
 }
