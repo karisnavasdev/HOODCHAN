@@ -21,10 +21,6 @@ const MEMES = [
   ["MEME/HRwDFDkbEAAf4-x.jpg", "Same chaos"]
 ];
 
-const ENDPOINTS = [
-  { url: "https://api.llm7.io/v1/chat/completions", model: "mistral-Nemo-Instruct-2407" },
-  { url: "https://api.llm7.io/v1/chat/completions", model: "nemotron-3-nano:30b" }
-];
 
 const intro = document.getElementById("intro");
 const site = document.getElementById("site");
@@ -246,7 +242,9 @@ form.addEventListener("submit", async (event) => {
     answer = "";
   }
   if (!answer) {
-    answer = quickAnswer(text) || (await askWiki(text)) || localAnswer(text);
+    answer = openaiPaused === "quota"
+      ? "The pro model is hooked up, but this OpenAI account has no credits left. Add billing, then ask me again."
+      : (quickAnswer(text) || localAnswer(text));
     mode = "local";
   }
   pending.querySelector(".bubble").innerHTML = `<span class="who">HOODCHAN</span>${format(answer)}`;
@@ -269,12 +267,12 @@ function contentToText(data) {
   return "";
 }
 
-let openaiPaused = false;
+let openaiPaused = "";
 
 async function askOpenAI(messages) {
-  if (openaiPaused || location.protocol === "file:") return "";
+  if (openaiPaused === "quota" || location.protocol === "file:") return "";
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 50000);
+  const timer = setTimeout(() => controller.abort(), 90000);
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -282,12 +280,12 @@ async function askOpenAI(messages) {
       signal: controller.signal,
       body: JSON.stringify({ messages: messages.filter((item) => item.role !== "system") })
     });
-    if (response.status === 401 || response.status === 402) {
-      openaiPaused = true;
+    const data = await response.json().catch(() => ({}));
+    if (data.error === "quota" || response.status === 402) {
+      openaiPaused = "quota";
       return "";
     }
     if (!response.ok) return "";
-    const data = await response.json();
     const textOut = contentToText(data);
     if (textOut && textOut.length > 1 && !/^error\b/i.test(textOut)) return textOut;
   } catch {
@@ -300,60 +298,7 @@ async function askOpenAI(messages) {
 
 async function askLive(text) {
   const messages = [{ role: "system", content: SYSTEM }, ...history.slice(-12)];
-  const openai = await askOpenAI(messages);
-  if (openai) return openai;
-  for (const endpoint of ENDPOINTS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 18000);
-    try {
-      const response = await fetch(endpoint.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: endpoint.model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 700
-        })
-      });
-      if (!response.ok) continue;
-      const raw = await response.text();
-      if (/<!doctype|<html|payment required/i.test(raw)) continue;
-      let textOut = raw.trim();
-      try { textOut = contentToText(JSON.parse(raw)); } catch { /* plain text is fine */ }
-      if (textOut && textOut.length > 1 && !/^error\b/i.test(textOut)) return textOut;
-    } catch {
-      /* try the next uplink */
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  return "";
-}
-
-async function askWiki(text) {
-  const query = text
-    .replace(/^(hey|hi|hoodchan|please|can you|could you|tell me|explain|what is|what's|who is|who's|where is|when did|why is|how does|how do|define)\s+/i, "")
-    .replace(/[?!.]+$/g, "")
-    .trim();
-  if (query.length < 3 || query.length > 80) return "";
-  if (/\b(you|your|ca|contract|ticker|hoodchan)\b/i.test(text) && text.length < 80) return "";
-  try {
-    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=&format=json&origin=*&srlimit=1`;
-    const search = await fetch(searchUrl);
-    const found = await search.json();
-    const title = found.query && found.query.search && found.query.search[0] && found.query.search[0].title;
-    if (!title) return "";
-    const summary = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
-    if (!summary.ok) return "";
-    const data = await summary.json();
-    if (!data.extract || data.type === "disambiguation") return "";
-    const extract = data.extract.length > 700 ? data.extract.slice(0, 700).replace(/\s+\S*$/, "") + "…" : data.extract;
-    return `${extract}\n\nThat's the open record on ${data.title}. Ask me to go further if you want.`;
-  } catch {
-    return "";
-  }
+  return askOpenAI(messages);
 }
 
 function tryMath(text) {
@@ -413,4 +358,90 @@ function quickAnswer(text) {
 
 function localAnswer() {
   return "The live uplink blinked, so I'm on the local core. Ask me again in a moment, or ask who I am and the contract — that one is 0xc38C332012a9116dcadE0c7F43B5D3C71799A9F8.";
+}
+
+const spikeCanvas = document.getElementById("spikes");
+const spikeCtx = spikeCanvas.getContext("2d");
+const thorns = [];
+let lastPointer = null;
+
+function fitSpikes() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  spikeCanvas.width = Math.round(window.innerWidth * dpr);
+  spikeCanvas.height = Math.round(window.innerHeight * dpr);
+  spikeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function spawnThorns(x, y, angle) {
+  const count = 4;
+  for (let i = 0; i < count; i++) {
+    const spread = (i - (count - 1) / 2) * 0.42 + (Math.random() - 0.5) * 0.2;
+    thorns.push({
+      x,
+      y,
+      angle: angle + spread,
+      len: 18 + Math.random() * 28,
+      wide: 2.2 + Math.random() * 2.4,
+      speed: 1.4 + Math.random() * 2.4,
+      life: 1
+    });
+  }
+  if (thorns.length > 90) thorns.splice(0, thorns.length - 90);
+}
+
+function drawThorn(thorn) {
+  const len = thorn.len * (0.45 + thorn.life * 0.55);
+  spikeCtx.save();
+  spikeCtx.translate(thorn.x, thorn.y);
+  spikeCtx.rotate(thorn.angle);
+  spikeCtx.globalAlpha = Math.max(thorn.life, 0);
+  const shade = spikeCtx.createLinearGradient(0, 0, len, 0);
+  shade.addColorStop(0, "rgba(120, 170, 40, 0)");
+  shade.addColorStop(0.4, "#b6e83a");
+  shade.addColorStop(1, "#f3ffd2");
+  spikeCtx.fillStyle = shade;
+  spikeCtx.shadowColor = "rgba(198, 241, 53, 0.9)";
+  spikeCtx.shadowBlur = 14;
+  spikeCtx.beginPath();
+  spikeCtx.moveTo(len, 0);
+  spikeCtx.quadraticCurveTo(len * 0.42, thorn.wide, 0, 0);
+  spikeCtx.quadraticCurveTo(len * 0.42, -thorn.wide, len, 0);
+  spikeCtx.fill();
+  spikeCtx.restore();
+}
+
+function paintThorns() {
+  spikeCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for (let i = thorns.length - 1; i >= 0; i--) {
+    const thorn = thorns[i];
+    thorn.x += Math.cos(thorn.angle) * thorn.speed;
+    thorn.y += Math.sin(thorn.angle) * thorn.speed;
+    thorn.life -= 0.028;
+    if (thorn.life <= 0) {
+      thorns.splice(i, 1);
+      continue;
+    }
+    drawThorn(thorn);
+  }
+  requestAnimationFrame(paintThorns);
+}
+
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  fitSpikes();
+  window.addEventListener("resize", fitSpikes);
+  window.addEventListener("pointermove", (event) => {
+    if (document.body.classList.contains("is-booting")) return;
+    const point = { x: event.clientX, y: event.clientY };
+    if (lastPointer) {
+      const dx = point.x - lastPointer.x;
+      const dy = point.y - lastPointer.y;
+      if (Math.hypot(dx, dy) > 10) {
+        spawnThorns(point.x, point.y, Math.atan2(dy, dx));
+        lastPointer = point;
+      }
+    } else {
+      lastPointer = point;
+    }
+  });
+  requestAnimationFrame(paintThorns);
 }

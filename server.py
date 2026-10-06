@@ -66,19 +66,46 @@ def clean_messages(raw):
     return [{"role": "system", "content": SYSTEM}, *cleaned]
 
 
+def reply_text(data):
+    direct = data.get("output_text")
+    if isinstance(direct, str) and direct.strip():
+        return direct.strip()
+    parts = []
+    for item in data.get("output") or []:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content")
+        if isinstance(content, str):
+            parts.append(content)
+            continue
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    parts.append(block.get("text") or "")
+    return "".join(parts).strip()
+
+
 def call_openai(messages):
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     model = os.environ.get("OPENAI_MODEL", MODEL).strip() or MODEL
     if not key:
         return 500, {"error": "missing_key"}
+    instructions = ""
+    conversation = []
+    for item in messages:
+        if item["role"] == "system":
+            instructions = item["content"]
+        else:
+            conversation.append({"role": item["role"], "content": item["content"]})
     payload = {
         "model": model,
-        "messages": messages,
-        "max_completion_tokens": 1500,
-        "reasoning_effort": "medium",
+        "instructions": instructions,
+        "input": conversation,
+        "reasoning": {"mode": "pro", "effort": "medium"},
+        "max_output_tokens": 4000,
     }
     request = urllib.request.Request(
-        "https://api.openai.com/v1/chat/completions",
+        "https://api.openai.com/v1/responses",
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": "Bearer " + key,
@@ -87,7 +114,7 @@ def call_openai(messages):
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=55) as response:
+        with urllib.request.urlopen(request, timeout=90) as response:
             data = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")
@@ -103,12 +130,7 @@ def call_openai(messages):
         return 502, {"error": "upstream"}
     except (urllib.error.URLError, TimeoutError):
         return 502, {"error": "upstream"}
-    choice = (data.get("choices") or [{}])[0]
-    message = choice.get("message") or {}
-    content = message.get("content") or ""
-    if isinstance(content, list):
-        content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
-    text = str(content).strip()
+    text = reply_text(data)
     if not text:
         return 502, {"error": "empty"}
     return 200, {"choices": [{"message": {"role": "assistant", "content": text}}]}
